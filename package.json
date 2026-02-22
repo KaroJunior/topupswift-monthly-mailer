@@ -8,14 +8,14 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "nodemailer": "^6.9.7",
     "dotenv": "^16.3.1",
-    "express": "^5.2.1",
-    "firebase": "^12.9.0",
-    "imap": "^0.8.17",
-    "mailparser": "^3.9.3",
     "node-cron": "^3.0.3",
-    "node-telegram-bot-api": "^0.67.0",
-    "nodemailer": "^8.0.1"
+    "firebase": "^10.7.0",
+    "imap": "^0.8.19",
+    "mailparser": "^3.6.5",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

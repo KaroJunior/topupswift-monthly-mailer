@@ -11,7 +11,7 @@ const imapConfig = {
   tls: true,
   tlsOptions: { rejectUnauthorized: false },
   authTimeout: 30000,
-  debug: console.log // This will show IMAP debug info
+  // debug: console.log // COMMENT THIS OUT - it was too verbose
 };
 
 function checkUnsubscribeReplies() {
@@ -31,7 +31,7 @@ function checkUnsubscribeReplies() {
 
         console.log(`📬 Inbox opened. Total messages: ${box.messages.total}`);
 
-        // Search for ALL unread emails (not just last 24 hours for testing)
+        // Search for ALL unread emails
         imap.search(['UNSEEN'], (err, results) => {
           if (err) {
             console.error('❌ Search error:', err);
@@ -49,17 +49,14 @@ function checkUnsubscribeReplies() {
 
           const fetch = imap.fetch(results, { 
             bodies: ['HEADER.FIELDS (FROM SUBJECT)', 'TEXT'], 
-            markSeen: true,
-            struct: true 
+            markSeen: true
           });
           
           let processed = 0;
           let checked = 0;
 
           fetch.on('message', (msg, seqno) => {
-            console.log(`\n📧 Processing email #${seqno}`);
-            
-            msg.on('body', (stream, info) => {
+            msg.on('body', (stream) => {
               simpleParser(stream, async (err, parsed) => {
                 checked++;
                 
@@ -69,49 +66,34 @@ function checkUnsubscribeReplies() {
                 }
 
                 try {
-                  // Log email details for debugging
-                  console.log('   From:', parsed.from?.text || 'Unknown');
-                  console.log('   Subject:', parsed.subject || 'No subject');
-                  
-                  // Extract email from "From" field
                   const from = parsed.from?.text || '';
                   const emailMatch = from.match(/<(.+?)>/);
                   const senderEmail = emailMatch ? emailMatch[1] : from;
                   
-                  console.log('   Sender email:', senderEmail);
+                  // Skip if no valid email
+                  if (!senderEmail || !senderEmail.includes('@')) return;
 
-                  // Check content for unsubscribe keywords
                   const subject = parsed.subject || '';
                   const text = parsed.text || '';
-                  const html = parsed.html || '';
 
                   const unsubscribeKeywords = [
                     'unsubscribe', 'UNSUBSCRIBE', 'Unsubscribe', 
                     'remove', 'REMOVE', 'opt-out', 'stop'
                   ];
                   
-                  const contentToCheck = subject + ' ' + text + ' ' + (html || '');
+                  const contentToCheck = subject + ' ' + text;
                   
-                  // Log what we're checking
-                  console.log('   Checking content for keywords...');
-                  
-                  const wantsToUnsubscribe = unsubscribeKeywords.some(keyword => {
-                    const found = contentToCheck.includes(keyword);
-                    if (found) console.log(`   ✅ Found keyword: "${keyword}"`);
-                    return found;
-                  });
+                  const wantsToUnsubscribe = unsubscribeKeywords.some(keyword => 
+                    contentToCheck.includes(keyword)
+                  );
 
-                  if (wantsToUnsubscribe && senderEmail) {
-                    console.log(`   🚫 Unsubscribe request detected from: ${senderEmail}`);
+                  if (wantsToUnsubscribe) {
+                    console.log(`📧 Unsubscribe request from: ${senderEmail}`);
                     const result = await handleUnsubscribe(senderEmail);
                     if (result) {
                       processed++;
-                      console.log(`   ✅ Successfully unsubscribed: ${senderEmail}`);
-                    } else {
-                      console.log(`   ❌ Failed to unsubscribe: ${senderEmail}`);
+                      console.log(`✅ Successfully unsubscribed: ${senderEmail}`);
                     }
-                  } else {
-                    console.log('   ❌ No unsubscribe keywords found');
                   }
                 } catch (error) {
                   console.error('❌ Error processing email:', error);
@@ -127,7 +109,7 @@ function checkUnsubscribeReplies() {
           });
 
           fetch.once('end', () => {
-            console.log(`\n✅ Check complete: Checked ${checked} emails, processed ${processed} unsubscribe requests`);
+            console.log(`✅ Checked ${checked} emails, processed ${processed} unsubscribe requests`);
             imap.end();
             resolve({ processed, checked });
           });
@@ -140,16 +122,12 @@ function checkUnsubscribeReplies() {
       reject(err);
     });
 
-    imap.once('end', () => {
-      console.log('🔌 IMAP connection closed');
-    });
-
     imap.connect();
   });
 }
 
 // Function to start periodic unsubscribe checking
-function startUnsubscribeChecker(intervalMinutes = 2) {
+function startUnsubscribeChecker(intervalMinutes = 5) {
   console.log(`🔍 Starting unsubscribe checker (every ${intervalMinutes} minutes)`);
   
   // Check immediately on start

@@ -1,41 +1,97 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
+const dns = require('dns'); // IMPORTANT: Add this at the top
 const { 
   loadEmails, 
   removeEmail, 
   addUnsubscribed,
-  saveLog  // Only saveLog is needed, not loadLogs
+  saveLog
 } = require('./firebase');
 const { getCurrentMonthTemplate } = require('./templates/index');
 const { rateLimit } = require('./utils/rateLimit');
 
-// In mailer.js, replace your transporter with:
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
+// Force IPv4 for all DNS lookups - THIS IS THE KEY FIX
+dns.setDefaultResultOrder('ipv4first');
+
+// Create transporter with multiple fallback options
+const createTransporter = (config) => {
+  return nodemailer.createTransport(config);
+};
+
+// Primary transporter configuration (IPv4 forced)
+const transporterConfig = {
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // true for 465
+  port: 587, // Changed from 465 to 587 (more reliable on Render)
+  secure: false, // false for 587
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
   },
-  connectionTimeout: 30000, // 30 seconds
-  socketTimeout: 30000, // 30 seconds
-  // Force IPv4
+  requireTLS: true,
+  connectionTimeout: 30000,
+  socketTimeout: 30000,
+  tls: {
+    rejectUnauthorized: false,
+    ciphers: 'SSLv3'
+  },
+  // Custom DNS lookup to force IPv4
   lookup: (hostname, options, callback) => {
-    const dns = require('dns');
-    dns.lookup(hostname, { family: 4 }, callback); // Only use IPv4
+    dns.lookup(hostname, { family: 4, hints: dns.ADDRCONFIG }, (err, address, family) => {
+      if (err) {
+        console.error('DNS lookup failed, falling back to default:', err);
+        // Fallback to default lookup
+        dns.lookup(hostname, options, callback);
+      } else {
+        callback(null, address, family);
+      }
+    });
   }
-});
+};
 
-// Verify connection
-transporter.verify((error) => {
-  if (error) {
-    console.error('SMTP Connection Error:', error);
-  } else {
-    console.log('✅ SMTP Server ready to send emails');
+let transporter = createTransporter(transporterConfig);
+
+// Test connection with retry logic
+async function testConnection(retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await transporter.verify();
+      console.log('✅ SMTP Server ready to send emails');
+      return true;
+    } catch (error) {
+      console.log(`SMTP connection attempt ${i + 1} failed:`, error.message);
+      
+      if (i === retries - 1) {
+        // Last attempt failed, try alternative configuration
+        console.log('Trying alternative SMTP configuration...');
+        try {
+          // Fallback to service-based configuration
+          transporter = createTransporter({
+            service: 'gmail',
+            auth: {
+              user: process.env.GMAIL_USER,
+              pass: process.env.GMAIL_APP_PASSWORD
+            },
+            connectionTimeout: 30000,
+            socketTimeout: 30000
+          });
+          
+          await transporter.verify();
+          console.log('✅ Alternative SMTP configuration working!');
+          return true;
+        } catch (altError) {
+          console.error('❌ All SMTP configurations failed:', altError.message);
+          return false;
+        }
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   }
-});
+}
+
+// Run connection test (don't await - let it run in background)
+testConnection();
 
 // Update the handleUnsubscribe function with more logging
 async function handleUnsubscribe(email) {
@@ -126,7 +182,7 @@ async function sendMonthlyEmails() {
     }
   }
 
-  // Log the results - FIXED: Use saveLog directly, no need to load existing logs
+  // Log the results
   const logEntry = {
     timestamp: new Date().toISOString(),
     month: template.month,

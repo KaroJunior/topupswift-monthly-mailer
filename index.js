@@ -18,6 +18,18 @@ const app = express();
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const ADMIN_ID = process.env.ADMIN_TELEGRAM_ID;
 
+// Handle cleanup on shutdown
+process.once('SIGINT', () => {
+  bot.stopPolling();
+  console.log('🤖 Bot stopped gracefully');
+  process.exit(0);
+});
+process.once('SIGTERM', () => {
+  bot.stopPolling();
+  console.log('🤖 Bot stopped gracefully');
+  process.exit(0);
+});
+
 // Keep Alive
 app.get('/', (req, res) => {
   res.send('TopUpSwift Mailer Bot is alive! 🤖');
