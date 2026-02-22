@@ -286,7 +286,7 @@ git push -u origin main
 |---------|-------|
 | **Name** | `your-business-monthly-mailer` |
 | **Environment** | Node |
-| **Region** | Frankfurt (or anyoen you choose) |
+| **Region** | Frankfurt (or anyone you choose) |
 | **Branch** | `main` |
 | **Build Command** | `npm install` |
 | **Start Command** | `npm start` |
@@ -534,3 +534,4 @@ MIT License - see [LICENSE](LICENSE) file
 
 **Built with ❤️ by [@karojunior](https://github.com/karojunior) for TopUpSwift users**  
 *Last updated: February 2026*
+*Don't forget to star*
