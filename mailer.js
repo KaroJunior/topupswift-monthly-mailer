@@ -1,6 +1,5 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
-const dns = require('dns');
 const { 
   loadEmails, 
   removeEmail, 
@@ -10,30 +9,26 @@ const {
 const { getCurrentMonthTemplate } = require('./templates/index');
 const { rateLimit } = require('./utils/rateLimit');
 
-// Force IPv4 to prevent connection timeouts on cloud hosts like Render
-dns.setDefaultResultOrder('ipv4first');
-
-// Simplified Transporter using the 'gmail' service helper
+// We are using the 'service' property which tells Nodemailer 
+// exactly how to handle Gmail without manual host/port guesswork.
 const transporter = nodemailer.createTransport({
   service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use SSL
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
   },
-  pool: true, // Uses a pooled connection for efficiency
-  maxConnections: 3,
-  connectionTimeout: 10000, 
+  // Increase timeouts significantly for cloud environments
+  connectionTimeout: 40000, 
+  greetingTimeout: 40000,
+  socketTimeout: 40000
 });
 
-// verify connection on startup
+// Silent verification on startup
 transporter.verify((error) => {
   if (error) {
-    console.error('❌ SMTP Verification failed:', error.message);
+    console.error('❌ Mailer: Not ready. Check App Password.');
   } else {
-    console.log('✅ SMTP Server Ready');
+    console.log('✅ Mailer: Ready');
   }
 });
 
@@ -43,18 +38,14 @@ async function handleUnsubscribe(email) {
     await removeEmail(cleanEmail);
     await addUnsubscribed(cleanEmail);
     
-    const confirmOptions = {
+    await transporter.sendMail({
       from: `"TopUpSwift" <${process.env.GMAIL_USER}>`,
       to: cleanEmail,
       subject: "Unsubscribe Confirmed",
-      html: `<p>You've been successfully removed from TopUpSwift's monthly list.</p>`
-    };
-    
-    await transporter.sendMail(confirmOptions);
-    console.log(`🚫 Unsubscribed: ${cleanEmail}`);
+      html: `<p>You have been removed from the list.</p>`
+    });
     return true;
-  } catch (error) {
-    console.error('❌ Unsubscribe error:', error.message);
+  } catch (err) {
     return false;
   }
 }
@@ -64,24 +55,22 @@ async function sendMonthlyEmails() {
   const template = getCurrentMonthTemplate();
   const results = { successful: 0, failed: 0, failedEmails: [] };
 
-  console.log(`📨 Sending ${emails.length} emails for ${template.month}...`);
+  console.log(`📨 Sending to ${emails.length} contacts...`);
 
   for (const email of emails) {
     try {
-      await rateLimit(); // Keep your rate limit logic
-
+      await rateLimit(); 
       await transporter.sendMail({
         from: `"TopUpSwift" <${process.env.GMAIL_USER}>`,
         to: email,
         subject: template.subject,
         html: template.html
       });
-
       results.successful++;
     } catch (error) {
       results.failed++;
       results.failedEmails.push(email);
-      console.error(`❌ Failed for ${email}:`, error.message);
+      console.error(`❌ ${email}: ${error.message}`);
     }
   }
 
@@ -93,7 +82,6 @@ async function sendMonthlyEmails() {
     failedEmails: results.failedEmails
   });
 
-  console.log(`📊 Result: ${results.successful} Sent, ${results.failed} Failed.`);
   return results;
 }
 
