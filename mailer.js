@@ -9,12 +9,22 @@ const {
 const { getCurrentMonthTemplate } = require('./templates/index');
 const { rateLimit } = require('./utils/rateLimit');
 
-// Create transporter
+// In mailer.js, replace your transporter with:
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // true for 465
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
+  },
+  connectionTimeout: 30000, // 30 seconds
+  socketTimeout: 30000, // 30 seconds
+  // Force IPv4
+  lookup: (hostname, options, callback) => {
+    const dns = require('dns');
+    dns.lookup(hostname, { family: 4 }, callback); // Only use IPv4
   }
 });
 
