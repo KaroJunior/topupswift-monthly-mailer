@@ -14,7 +14,6 @@ A powerful Telegram bot that automatically sends "Happy New Month" HTML emails t
 
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Demo Screenshots](#demo-screenshots)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Detailed Setup Guide](#detailed-setup-guide)
