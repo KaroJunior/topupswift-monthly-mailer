@@ -3,11 +3,12 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0-brightgreen)](https://nodejs.org)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue)](https://core.telegram.org/bots)
 [![Firebase](https://img.shields.io/badge/Firebase-Realtime--DB-orange)](https://firebase.google.com)
+[![Hosted on pxxl.app](https://img.shields.io/badge/Hosted%20on-pxxl.app-blueviolet)](https://pxxl.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A powerful Telegram bot that automatically sends "Happy New Month" HTML emails to TopUpSwift users. Built with Node.js, featuring 12 unique monthly templates, automatic scheduling, Firebase storage, and comprehensive email list management.
 
-**Live Demo**: [https://topupswift-monthly-mailer.pxxl.click/](https://topupswift-monthly-mailer.pxxl.click/)  
+**Live Demo**: [https://topupswift-monthly-mailer.pxxl.click](https://topupswift-monthly-mailer.pxxl.click)  
 **GitHub Repository**: [github.com/karojunior/topupswift-monthly-mailer](https://github.com/karojunior/topupswift-monthly-mailer)
 
 ## 📋 Table of Contents
@@ -25,8 +26,7 @@ A powerful Telegram bot that automatically sends "Happy New Month" HTML emails t
 - [Local Testing](#local-testing)
 - [Bot Commands](#bot-commands)
 - [Project Structure](#project-structure)
-- [Deployment to Render](#deployment-to-render)
-- [Keeping Your Bot Alive](#keeping-your-bot-alive-with-cron-joborg)
+- [Deployment to pxxl.app](#deployment-to-pxxl.app
 - [Adding Your Email List](#adding-your-email-list)
 - [Monthly Email Schedule](#monthly-email-schedule)
 - [Troubleshooting](#troubleshooting)
@@ -44,7 +44,8 @@ A powerful Telegram bot that automatically sends "Happy New Month" HTML emails t
 - **Campaign Statistics**: Track sends, failures, and history
 - **Admin-Only Access**: Secure bot accessible only by you
 - **Bulk Email Addition**: Add multiple emails at once with commas
-- **Keep-Alive Endpoint**: Works with cron-job.org to prevent sleeping
+- **Always Awake**: Hosted on pxxl.app with no sleeping timers
+- **No Cron Job Needed**: pxxl.app keeps your bot running 24/7
 
 ## 🛠 Tech Stack
 
@@ -55,8 +56,11 @@ A powerful Telegram bot that automatically sends "Happy New Month" HTML emails t
 | **Email Service** | Nodemailer + Gmail SMTP |
 | **Database** | Firebase Realtime Database |
 | **Scheduling** | node-cron |
-| **Hosting** | Render (Free Tier) |
-| **Keep Alive** | cron-job.org |
+| **Hosting** | pxxl.app (Nigerian hosting platform) |
+
+## 🇳🇬 Built for Nigerian Developers
+
+This bot is proudly hosted on **pxxl.app**, a Nigerian hosting platform created by Robinson Honour. No sleeping timers, no credit card required - perfect for African developers!
 
 ## 📦 Prerequisites
 
@@ -64,7 +68,7 @@ Before you begin, ensure you have:
 
 - ✅ Node.js 16.x or higher installed
 - ✅ A Telegram account
-- ✅ A Gmail account (your-businessofficial@gmail.com)
+- ✅ A Gmail account (e.g your-business-email@gmail.com)
 - ✅ A Google account for Firebase
 - ✅ Git installed
 - ✅ Basic familiarity with terminal/command line
@@ -89,9 +93,9 @@ npm start
 
 1. **Open Telegram** and search for [@BotFather](https://t.me/botfather)
 2. Send `/newbot` command
-3. Choose a name: `your-business Monthly Mailer`
-4. Choose a username: `@your-business_monthly_bot` (or similar available name)
-5. Copy the API token (looks like: `7652749249:AAidhfhdiugidciincsdweewiwcgwuw`)
+3. Choose a name: `e.g TopUpSwift Monthly Mailer`
+4. Choose a username: ` e.g @topupswift_monthly_bot` 
+5. Copy the API token (looks like: `7234567890:AAHdqTcvCdfghjkWJxfSeofSAs0K5PALDsaw`)
 
 **Set up bot commands** (send these to BotFather):
 ```
@@ -120,16 +124,16 @@ stats - View statistics
 4. Click on "App passwords"
 5. Select **"Mail"** as the app
 6. Select **"Other"** as the device
-7. Enter name: **"your-business Bot"**
+7. Enter name: **e.g "Your Business Bot"**
 8. Click **"Generate"**
-9. Copy the 16-character password (looks like: `hsfn jekw jkde whif`)
-10. **Remove spaces** when using: `hsfnjekwjkdewhif`
+9. Copy the 16-character password (looks like: `hdsk fnjd bfjk sdff`)
+10. **Remove spaces** when using: `hdskfnjdbfjksdff`
 
 ### 4. Firebase Setup
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click **"Create a project"**
-3. Name it: **`your-business-mailer`**
+3. Name it
 4. Disable Google Analytics (optional)
 5. Click **"Create project"**
 
@@ -145,18 +149,18 @@ stats - View statistics
 
 1. Click **"Project Overview"** (top left)
 2. Click **"</>"** (Add app) - Web icon
-3. Register app name: **"your-business-mailer"**
+3. Register app name
 4. Copy the Firebase config object:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyffxfxcgcgcj3H4e56rygfr456ryfhc6u7v8",
-  authDomain: "your-business-mailer.firebaseapp.com",
-  databaseURL: "https://your-business-mailer-default-rtdb.firebaseio.com",
-  projectId: "your-business-mailer",
-  storageBucket: "your-business-mailer.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abc123def456ghi789"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOAMIN",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 ```
 
@@ -166,23 +170,17 @@ Create a `.env` file in your project root:
 
 ```env
 # Telegram (from BotFather)
-TELEGRAM_BOT_TOKEN=7234567890:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
+TELEGRAM_BOT_TOKEN=7234345890:AAHdqTDFGHcvCH1vGWFeofSAs0K5PALDsaw
 
 # Your Telegram ID (from userinfobot)
-ADMIN_TELEGRAM_ID=123456789
+ADMIN_TELEGRAM_ID=YOUR_TELEGRAM_ID
 
-# Gmail (your-businessofficial@gmail.com)
-GMAIL_USER=your-businessofficial@gmail.com
-GMAIL_APP_PASSWORD=hsfnjekwjkdewhif
+# Gmail
+GMAIL_USER=YOUR_EMAIL
+GMAIL_APP_PASSWORD=YOUR_PASSWORD
 
 # Firebase (from your Firebase config)
-FIREBASE_API_KEY=AIzaSyffxfxcgcgcj3H4e56rygfr456ryfhc6u7v8
-FIREBASE_AUTH_DOMAIN=your-business-mailer.firebaseapp.com
-FIREBASE_DATABASE_URL=https://your-business-mailer-default-rtdb.firebaseio.com
-FIREBASE_PROJECT_ID=your-business-mailer
-FIREBASE_STORAGE_BUCKET=your-business-mailer.appspot.com
-FIREBASE_MESSAGING_SENDER_ID=123456789012
-FIREBASE_APP_ID=1:123456789012:web:abc123def456ghi789
+FIREBASE_API_KEY=YOUR_API_KEY....
 ```
 
 ## 🧪 Local Testing
@@ -206,7 +204,7 @@ npm start
 
 Expected output:
 ```
-🤖 your-business Mailer Bot is running...
+🤖 TopUpSwift Mailer Bot is running...
 ✅ SMTP Server ready to send emails
 ⏰ Scheduler started - Will run on 1st of each month at 00:00
 ```
@@ -227,7 +225,7 @@ Expected output:
 ## 📁 Project Structure
 
 ```
-your-business-monthly-mailer/
+main folder/
 ├── index.js                 # Telegram bot entry point
 ├── mailer.js                # Nodemailer logic
 ├── scheduler.js             # Cron job scheduler
@@ -246,7 +244,15 @@ your-business-monthly-mailer/
     └── getCurrentMonth.js   # Month detection utility
 ```
 
-## 🚀 Deployment to Render
+## 🚀 Deployment to pxxl.app
+
+### Why pxxl.app?
+
+- 🇳🇬 **Nigerian hosting platform** - Built by Robinson Honour for African developers
+- 💰 **Completely free** - No credit card required
+- ⚡ **No sleeping timers** - Your bot stays awake 24/7
+- 🔗 **Free subdomain** - `your-app.pxxl.app`
+- 🚀 **Easy deployment** - Direct GitHub integration
 
 ### Step 1: Prepare for GitHub
 
@@ -269,38 +275,22 @@ git add .
 git commit -m "Initial commit"
 
 # Add your GitHub remote
-git remote add origin https://github.com/your-github-username/your-business-monthly-mailer.git
+git remote add origin https://github.com/karojunior/topupswift-monthly-mailer.git
 git push -u origin main
 ```
 
-### Step 3: Deploy on Render
+### Step 3: Deploy on pxxl.app
 
-1. **Go to** [Render.com](https://render.com) and sign in (use GitHub account for easy access)
-2. Click **"New +"** → **"Web Service"**
-3. **Connect your GitHub repository** (you may need to authorize Render)
-4. Select the `your-business-monthly-mailer` repository
-
-5. **Configure the service:**
-
-| Setting | Value |
-|---------|-------|
-| **Name** | `your-business-monthly-mailer` |
-| **Environment** | Node |
-| **Region** | Frankfurt (or anyone you choose) |
-| **Branch** | `main` |
-| **Build Command** | `npm install` |
-| **Start Command** | `npm start` |
-| **Plan** | Free |
-
-6. **Add Environment Variables** (click "Advanced" then "Add Environment Variable"):
-
-Add ALL variables from your `.env` file:
+1. Go to **[pxxl.app](https://pxxl.app)** and sign up with GitHub
+2. Click **"New Project"**
+3. Select your repository: `karojunior/topupswift-monthly-mailer`
+4. **Add Environment Variables** (copy all from your `.env` file):
 
 | Key | Value |
 |-----|-------|
 | `TELEGRAM_BOT_TOKEN` | your_token |
 | `ADMIN_TELEGRAM_ID` | your_id |
-| `GMAIL_USER` | your-businessofficial@gmail.com |
+| `GMAIL_USER` | your-business-email@gmail.com |
 | `GMAIL_APP_PASSWORD` | your_app_password |
 | `FIREBASE_API_KEY` | your_firebase_api_key |
 | `FIREBASE_AUTH_DOMAIN` | your_auth_domain |
@@ -310,61 +300,11 @@ Add ALL variables from your `.env` file:
 | `FIREBASE_MESSAGING_SENDER_ID` | your_sender_id |
 | `FIREBASE_APP_ID` | your_app_id |
 
-7. Click **"Create Web Service"**
+5. Click **"Deploy"**
 
-8. **Wait 2-3 minutes** for deployment to complete
+6. **Your bot is live!** Access it at: `https://topupswift-monthly-mailer.pxxl.click`
 
-9. **Your bot is live!** Access it at: `https://your-business-monthly-mailer.onrender.com`
-
-## ⏰ Keeping Your Bot Alive with cron-job.org
-
-Render free tier sleeps after 15-30 minutes of inactivity. Use cron-job.org to ping your bot every 10 minutes:
-
-### Step 1: Add a health check endpoint
-
-Your `index.js` already has this (if not, add it):
-
-```javascript
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('your-business Mailer Bot is alive! 🤖');
-});
-
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    time: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🌐 Web server running on port ${PORT}`);
-});
-```
-
-### Step 2: Set up cron-job.org
-
-1. Go to [cron-job.org](https://cron-job.org)
-2. **Sign up** for a free account
-3. Click **"Create Cronjob"**
-
-4. **Configure the cron job:**
-
-| Field | Value |
-|-------|-------|
-| **Title** | `your-business Keep Alive` |
-| **URL** | `https://your-business-monthly-mailer.onrender.com/health` |
-| **Execution schedule** | `Every 10 minutes` |
-| **Request method** | `GET` |
-| **Save response** | Optional (can disable) |
-
-5. Click **"Create"**
-
-✅ Your bot will now stay awake 24/7!
+**Note**: Unlike Render, **no cron job is needed**! pxxl.app keeps your bot awake 24/7 automatically.
 
 ## 📧 Adding Your Email List
 
@@ -409,7 +349,7 @@ const emails = [
   "customer1@gmail.com",
   "customer2@gmail.com",
   "customer3@gmail.com",
-  // ... add all 125+ emails
+  // ... add all your emails
 ];
 
 addMultipleEmails(emails).then(result => {
@@ -446,15 +386,7 @@ The bot automatically sends emails on:
 | **Firebase connection error** | Check FIREBASE_DATABASE_URL is correct |
 | **"Invalid login" from Gmail** | Regenerate App Password in Google Account |
 | **Data not persisting** | Firebase is working - check your database console |
-| **Cron not running** | Check timezone in scheduler.js (set to Africa/Lagos) |
-| **Bot sleeps on Render** | cron-job.org should ping every 10 minutes |
-
-### View Logs on Render
-
-1. Go to your Render dashboard
-2. Click on your web service
-3. Go to **"Logs"** tab
-4. See real-time output
+| **SMTP connection timeout** | IPv4 fix is applied in mailer.js |
 
 ### Check Firebase Data
 
@@ -466,10 +398,10 @@ The bot automatically sends emails on:
 ## ❓ FAQ
 
 ### Q: How many emails can I send?
-**A:** Gmail limit is 500 emails per day. Your 125-email list is well within limits.
+**A:** Gmail limit is 500 emails per day. Your list is well within limits.
 
-### Q: Will data persist on Render free tier?
-**A:** Yes! Because we use Firebase, your data is safe even when Render restarts.
+### Q: Will data persist on pxxl.app?
+**A:** Yes! We use Firebase for storage, so your data is safe even if the app restarts.
 
 ### Q: How do I handle unsubscribes?
 **A:** When users reply "UNSUBSCRIBE", you'll see it in your Gmail. Simply run:
@@ -488,11 +420,17 @@ The bot automatically sends emails on:
 
 ### Q: How much does this cost?
 **A:** 
-- Render: Free
+- pxxl.click: Free (no credit card required)
 - Firebase: Free (1GB storage)
-- cron-job.org: Free
 - Gmail: Free
 - **Total: $0/month**
+
+### Q: Why pxxl.app instead of Render?
+**A:** pxxl.app is a Nigerian hosting platform that:
+- 🇳🇬 Supports local developers
+- 💰 No credit card required
+- ⚡ No sleeping timers
+- 🚀 Built by Robinson Honour specifically for African developers
 
 ## 📝 License
 
@@ -502,14 +440,14 @@ MIT License - see [LICENSE](LICENSE) file
 
 - **GitHub Issues**: [github.com/karojunior/topupswift-monthly-mailer/issues](https://github.com/karojunior/topupswift-monthly-mailer/issues)
 - **Email**: karojunior50@gmail.com
-- **Telegram**: [@kingkkaro](https://t.me/kingkkaro) 
+- **Telegram**: [@karojunior](https://t.me/kingkkaro)
 
 ## 🙏 Acknowledgments
 
 - TopUpSwift customers for being awesome
 - Firebase for free database hosting
-- Render for free Node.js hosting
-- cron-job.org for free keep-alive service
+- **Robinson Honour** for creating pxxl.app - supporting Nigerian developers! 🇳🇬
+- pxxl.app for reliable, always-awake hosting
 
 ---
 
@@ -524,14 +462,14 @@ MIT License - see [LICENSE](LICENSE) file
 - [ ] Created `.env` file with all credentials
 - [ ] Tested locally with `/send`
 - [ ] Pushed to GitHub
-- [ ] Deployed to Render
-- [ ] Added environment variables on Render
-- [ ] Set up cron-job.org
+- [ ] Deployed to pxxl.app
+- [ ] Added environment variables on pxxl.app
 - [ ] Added email list
 - [ ] **Done! Ready for 1st of month!** 🎉
 
 ---
 
 **Built with ❤️ by [@karojunior](https://github.com/karojunior) for TopUpSwift users**  
-*Last updated: February 2026*
-*Don't forget to star*
+**Hosted on pxxl.app - Nigerian hosting for African developers** 🇳🇬  
+*Last updated: February 2026*  
+⭐ **Don't forget to star this repository!** ⭐
