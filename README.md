@@ -1,11 +1,5 @@
 # TopUpSwift Monthly Mailer Bot
 
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0-brightgreen)](https://nodejs.org)
-[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue)](https://core.telegram.org/bots)
-[![Firebase](https://img.shields.io/badge/Firebase-Realtime--DB-orange)](https://firebase.google.com)
-[![Hosted on pxxl.app](https://img.shields.io/badge/Hosted%20on-pxxl.app-blueviolet)](https://pxxl.app)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-
 A powerful Telegram bot that automatically sends "Happy New Month" HTML emails to TopUpSwift users. Built with Node.js, featuring 12 unique monthly templates, automatic scheduling, Firebase storage, and comprehensive email list management.
 
 **Live Demo**: [https://topupswift-monthly-mailer.pxxl.click](https://topupswift-monthly-mailer.pxxl.click)  
