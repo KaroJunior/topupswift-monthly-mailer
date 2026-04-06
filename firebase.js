@@ -193,6 +193,19 @@ async function addMultipleEmails(emailsArray) {
   }
 }
 
+// Delete all emails
+async function deleteAllEmails() {
+  try {
+    const emailsRef = ref(database, 'emails');
+    await set(emailsRef, null);
+    console.log('✅ All emails deleted from Firebase');
+    return true;
+  } catch (error) {
+    console.error('Error deleting all emails:', error);
+    return false;
+  }
+}
+
 // Export all functions
 module.exports = {
   loadEmails,
@@ -203,5 +216,6 @@ module.exports = {
   loadUnsubscribed,
   addUnsubscribed,
   saveLog,
-  loadLogs
+  loadLogs,
+  deleteAllEmails
 };

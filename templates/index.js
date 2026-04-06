@@ -1,3 +1,5 @@
+const { getNigeriaTime } = require('../utils/getNigeriaTime');
+
 const january = require('./january');
 const february = require('./february');
 const march = require('./march');
@@ -27,18 +29,22 @@ const templates = {
 };
 
 function getCurrentMonthTemplate() {
-  const now = new Date();
-  const month = now.getMonth(); // 0-11
+  // FORCE Nigeria time instead of server time
+  const nigeria = getNigeriaTime();
+  const month = nigeria.month;
   const template = templates[month];
   
+  console.log(`📅 Getting template for: ${nigeria.monthName} (Month index: ${month})`);
+  console.log(`🕐 Nigeria time: ${nigeria.date.toLocaleString()}`);
+  console.log(`🕐 Server time: ${new Date().toLocaleString()}`);
+  
   if (!template) {
-    // Fallback to January if something goes wrong
     console.error('Template not found for month:', month);
     return templates[0];
   }
   
   return {
-    month: now.toLocaleString('default', { month: 'long' }),
+    month: nigeria.monthName,
     subject: template.subject,
     html: template.html
   };

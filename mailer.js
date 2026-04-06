@@ -204,7 +204,43 @@ async function sendMonthlyEmails() {
   return results;
 }
 
+// Test email function - sends only to admin
+async function sendTestEmail() {
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
+  const template = getCurrentMonthTemplate();
+  
+  console.log(`📨 Sending test email to admin: ${adminEmail}`);
+  console.log(`📅 Test email would be for month: ${template.month}`);
+  
+  try {
+    const mailOptions = {
+      from: `"TopUpSwift" <${process.env.GMAIL_USER}>`,
+      to: adminEmail,
+      subject: `[TEST] ${template.subject}`,
+      html: `
+        <div style="border: 3px solid #ff6b6b; padding: 15px; background-color: #fff5f5;">
+          <p style="color: #ff0000; font-weight: bold;">⚠️ THIS IS A TEST EMAIL ⚠️</p>
+          <p>This is a test of the monthly email template for <strong>${template.month}</strong>.</p>
+          <p>If you received this, your email system is working correctly!</p>
+          <hr style="border: 1px solid #ddd; margin: 15px 0;">
+          ${template.html}
+          <hr style="border: 1px solid #ddd; margin: 15px 0;">
+          <p style="font-size: 12px; color: #999;">This test email was sent to the admin only. No users were notified.</p>
+        </div>
+      `
+    };
+    
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Test email sent to admin: ${adminEmail}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Test email failed:', error);
+    return false;
+  }
+}
+
 module.exports = {
   sendMonthlyEmails,
-  handleUnsubscribe
+  handleUnsubscribe,
+  sendTestEmail  
 };

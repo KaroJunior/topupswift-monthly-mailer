@@ -359,4 +359,87 @@ startScheduler();
 // Start checking for unsubscribe replies every 5 minutes
 startUnsubscribeChecker(5);
 
+// Test timezone command
+bot.onText(/\/time/, async (msg) => {
+  if (!isAdmin(msg)) return;
+  
+  const { getNigeriaTime } = require('./utils/getNigeriaTime');
+  const nigeria = getNigeriaTime();
+  const serverNow = new Date();
+  
+  const response = `
+🕐 *Timezone Debug Info*
+
+*Nigeria Time:*
+- Date: ${nigeria.date.toLocaleString()}
+- Month: ${nigeria.monthName}
+- Day of month: ${nigeria.day}
+- Is 1st of month? ${nigeria.isFirstDayOfMonth ? '✅ YES' : '❌ NO'}
+
+*Server Time:*
+- Date: ${serverNow.toLocaleString()}
+- Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
+
+*Current Template Would Be:*
+- ${nigeria.monthName}
+  `;
+  
+  bot.sendMessage(msg.chat.id, response, { parse_mode: 'Markdown' });
+});
+
+// Test email command (sends only to admin)
+bot.onText(/\/testemail/, async (msg) => {
+  if (!isAdmin(msg)) return;
+  
+  try {
+    bot.sendMessage(msg.chat.id, '📨 Sending test email to your admin email...');
+    
+    const { sendTestEmail } = require('./mailer');
+    const result = await sendTestEmail();
+    
+    if (result) {
+      bot.sendMessage(msg.chat.id, '✅ Test email sent! Check your inbox.');
+    } else {
+      bot.sendMessage(msg.chat.id, '❌ Failed to send test email. Check logs.');
+    }
+  } catch (error) {
+    bot.sendMessage(msg.chat.id, `❌ Error: ${error.message}`);
+  }
+});
+
+// Delete all emails command
+bot.onText(/\/deleteall/, async (msg) => {
+  if (!isAdmin(msg)) return;
+  
+  // Ask for confirmation first (safety measure)
+  bot.sendMessage(msg.chat.id, 
+    '⚠️ *WARNING:* This will delete ALL emails from your list!\n\n' +
+    'This action cannot be undone.\n\n' +
+    'Type `/confirmdelete` within 30 seconds to confirm.',
+    { parse_mode: 'Markdown' }
+  );
+  
+  // Store confirmation state (simple timeout approach)
+  const confirmHandler = async (confirmMsg) => {
+    if (confirmMsg.text === '/confirmdelete' && confirmMsg.from.id.toString() === ADMIN_ID) {
+      try {
+        const { deleteAllEmails } = require('./firebase');
+        await deleteAllEmails();
+        bot.sendMessage(msg.chat.id, '✅ All emails have been deleted from the list.');
+      } catch (error) {
+        bot.sendMessage(msg.chat.id, `❌ Error deleting emails: ${error.message}`);
+      }
+      // Remove listener after confirmation
+      bot.removeListener('message', confirmHandler);
+    }
+  };
+  
+  bot.on('message', confirmHandler);
+  
+  // Remove listener after 30 seconds
+  setTimeout(() => {
+    bot.removeListener('message', confirmHandler);
+  }, 30000);
+});
+
 console.log('🤖 TopUpSwift Mailer Bot is running...');
