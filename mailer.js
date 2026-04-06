@@ -1,6 +1,6 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
-const dns = require('dns'); // IMPORTANT: Add this at the top
+const dns = require('dns');
 const { 
   loadEmails, 
   removeEmail, 
@@ -10,7 +10,7 @@ const {
 const { getCurrentMonthTemplate } = require('./templates/index');
 const { rateLimit } = require('./utils/rateLimit');
 
-// Force IPv4 for all DNS lookups - THIS IS THE KEY FIX
+// Force IPv4 for all DNS lookups
 dns.setDefaultResultOrder('ipv4first');
 
 // Create transporter with multiple fallback options
@@ -21,8 +21,8 @@ const createTransporter = (config) => {
 // Primary transporter configuration (IPv4 forced)
 const transporterConfig = {
   host: 'smtp.gmail.com',
-  port: 587, // Changed from 465 to 587 (more reliable on Render)
-  secure: false, // false for 587
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
@@ -34,12 +34,10 @@ const transporterConfig = {
     rejectUnauthorized: false,
     ciphers: 'SSLv3'
   },
-  // Custom DNS lookup to force IPv4
   lookup: (hostname, options, callback) => {
     dns.lookup(hostname, { family: 4, hints: dns.ADDRCONFIG }, (err, address, family) => {
       if (err) {
         console.error('DNS lookup failed, falling back to default:', err);
-        // Fallback to default lookup
         dns.lookup(hostname, options, callback);
       } else {
         callback(null, address, family);
@@ -61,10 +59,8 @@ async function testConnection(retries = 3) {
       console.log(`SMTP connection attempt ${i + 1} failed:`, error.message);
       
       if (i === retries - 1) {
-        // Last attempt failed, try alternative configuration
         console.log('Trying alternative SMTP configuration...');
         try {
-          // Fallback to service-based configuration
           transporter = createTransporter({
             service: 'gmail',
             auth: {
@@ -84,37 +80,30 @@ async function testConnection(retries = 3) {
         }
       }
       
-      // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 }
 
-// Run connection test (don't await - let it run in background)
 testConnection();
 
-// Update the handleUnsubscribe function with more logging
 async function handleUnsubscribe(email) {
   console.log(`\n🚫 Handling unsubscribe for: ${email}`);
   
   try {
-    // Clean email
     const cleanEmail = email.replace(/[<>]/g, '').trim().toLowerCase();
     console.log(`   Cleaned email: ${cleanEmail}`);
     
-    // Remove from active list
     console.log(`   Attempting to remove from active list...`);
     const removeResult = await removeEmail(cleanEmail);
     console.log(`   Remove result: ${removeResult ? 'Success' : 'Not found or failed'}`);
     
-    // Add to unsubscribed
     console.log(`   Adding to unsubscribed list...`);
     const addResult = await addUnsubscribed(cleanEmail);
     console.log(`   Add to unsubscribed result: ${addResult ? 'Success' : 'Failed'}`);
     
     console.log(`✅ Unsubscribe completed for: ${cleanEmail}`);
   
-    // Send confirmation email
     try {
       const confirmOptions = {
         from: `"TopUpSwift" <${process.env.GMAIL_USER}>`,
@@ -147,7 +136,6 @@ async function handleUnsubscribe(email) {
   }
 }
 
-// Send monthly emails
 async function sendMonthlyEmails() {
   const emails = await loadEmails();
   const template = getCurrentMonthTemplate();
@@ -161,7 +149,6 @@ async function sendMonthlyEmails() {
 
   for (const email of emails) {
     try {
-      // Rate limiting - 1 second between emails
       await rateLimit();
 
       const mailOptions = {
@@ -182,7 +169,6 @@ async function sendMonthlyEmails() {
     }
   }
 
-  // Log the results
   const logEntry = {
     timestamp: new Date().toISOString(),
     month: template.month,
@@ -191,7 +177,6 @@ async function sendMonthlyEmails() {
     failedEmails: results.failedEmails
   };
 
-  // Save directly to Firebase
   await saveLog(logEntry);
 
   console.log(`
@@ -204,18 +189,24 @@ async function sendMonthlyEmails() {
   return results;
 }
 
-// Test email function - sends only to admin
+// Test email function - sends to ADMIN_EMAIL from .env
 async function sendTestEmail() {
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.GMAIL_USER;
+  // FIXED: Use ADMIN_EMAIL from .env directly
+  const adminEmail = process.env.ADMIN_EMAIL;
   const template = getCurrentMonthTemplate();
   
   console.log(`📨 Sending test email to admin: ${adminEmail}`);
   console.log(`📅 Test email would be for month: ${template.month}`);
   
+  if (!adminEmail) {
+    console.error('❌ ADMIN_EMAIL not set in .env file!');
+    return false;
+  }
+  
   try {
     const mailOptions = {
       from: `"TopUpSwift" <${process.env.GMAIL_USER}>`,
-      to: adminEmail,
+      to: adminEmail,  // Now using ADMIN_EMAIL directly
       subject: `[TEST] ${template.subject}`,
       html: `
         <div style="border: 3px solid #ff6b6b; padding: 15px; background-color: #fff5f5;">

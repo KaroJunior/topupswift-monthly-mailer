@@ -8,7 +8,7 @@ const {
   loadUnsubscribed, 
   loadLogs 
 } = require('./firebase');
-const { sendMonthlyEmails } = require('./mailer');
+const { sendMonthlyEmails, sendTestEmail } = require('./mailer');
 const { startScheduler } = require('./scheduler');
 const { startUnsubscribeChecker } = require('./utils/checkUnsubscribes');
 const express = require('express');
@@ -60,25 +60,37 @@ bot.onText(/\/start/, (msg) => {
   const helpText = `
 🚀 *TopUpSwift Monthly Mailer Bot*
 
-*Available Commands:*
+*Email Management:*
 /add email@gmail.com - Add single email
-/add email1@gmail.com, email2@gmail.com - Add multiple emails (comma separated)
+/add email1, email2, email3 - Add multiple emails
 /remove email@gmail.com - Remove email from list
+/removeall - ⚠️ Delete ALL emails (asks confirmation)
 /list - View all emails
 /export - Get all emails as text
-/send - Manually send this month's email
+
+*Email Sending:*
+/send - Manually send this month's email to ALL users
+/testemail - Send test email ONLY to you (admin)
 /stats - View statistics
 
-*Email List Management*
-- Emails stored in Firebase (permanent)
-- 500 email limit
-- Auto-unsubscribe on reply
+*Unsubscribe Management:*
+/testunsub email@gmail.com - Test unsubscribe
+/forcecheck - Force check for unsubscribe replies
+
+*Debug & Timezone:*
+/time - Check Nigeria time vs Server time
+
+*Important Notes:*
+- 📧 Emails stored in Firebase (permanent)
+- ⏰ Auto-sends on 1st of each month at 00:01 Nigeria time
+- 🚫 Rate limited: 1 email per second
+- 📊 500 email max limit
   `;
   
   bot.sendMessage(msg.chat.id, helpText, { parse_mode: 'Markdown' });
 });
 
-// Updated Add email command (NOW SUPPORTS MULTIPLE)
+// Updated Add email command (SUPPORTS MULTIPLE)
 bot.onText(/\/add (.+)/, async (msg, match) => {
   if (!isAdmin(msg)) return;
   
@@ -170,6 +182,41 @@ bot.onText(/\/remove (.+)/, async (msg, match) => {
     bot.sendMessage(msg.chat.id, '❌ Error removing email.');
     console.error('Remove error:', error);
   }
+});
+
+// Remove all emails command (changed from /deleteall to /removeall)
+bot.onText(/\/removeall/, async (msg) => {
+  if (!isAdmin(msg)) return;
+  
+  // Ask for confirmation first (safety measure)
+  bot.sendMessage(msg.chat.id, 
+    '⚠️ *WARNING:* This will delete ALL emails from your list!\n\n' +
+    'This action cannot be undone.\n\n' +
+    'Type `/confirmremoveall` within 30 seconds to confirm.',
+    { parse_mode: 'Markdown' }
+  );
+  
+  // Store confirmation state
+  const confirmHandler = async (confirmMsg) => {
+    if (confirmMsg.text === '/confirmremoveall' && confirmMsg.from.id.toString() === ADMIN_ID) {
+      try {
+        const { deleteAllEmails } = require('./firebase');
+        await deleteAllEmails();
+        bot.sendMessage(msg.chat.id, '✅ All emails have been deleted from the list.');
+      } catch (error) {
+        bot.sendMessage(msg.chat.id, `❌ Error deleting emails: ${error.message}`);
+      }
+      // Remove listener after confirmation
+      bot.removeListener('message', confirmHandler);
+    }
+  };
+  
+  bot.on('message', confirmHandler);
+  
+  // Remove listener after 30 seconds
+  setTimeout(() => {
+    bot.removeListener('message', confirmHandler);
+  }, 30000);
 });
 
 // List emails command
@@ -278,7 +325,7 @@ bot.onText(/\/send/, async (msg) => {
   }
 });
 
-// Stats command - with safer reduce
+// Stats command
 bot.onText(/\/stats/, async (msg) => {
   if (!isAdmin(msg)) return;
   
@@ -291,7 +338,6 @@ bot.onText(/\/stats/, async (msg) => {
       ? new Date(logs[logs.length - 1].timestamp).toLocaleString()
       : 'Never';
     
-    // Safer reduce with default values
     const totalSuccessful = logs.reduce((acc, log) => acc + (log.successful || 0), 0);
     const totalFailed = logs.reduce((acc, log) => acc + (log.failed || 0), 0);
     
@@ -314,7 +360,7 @@ bot.onText(/\/stats/, async (msg) => {
   }
 });
 
-// TEST COMMAND - Add this to your index.js to manually test unsubscribe
+// Test unsubscribe command
 bot.onText(/\/testunsub (.+)/, async (msg, match) => {
   if (!isAdmin(msg)) return;
   
@@ -323,7 +369,6 @@ bot.onText(/\/testunsub (.+)/, async (msg, match) => {
   try {
     bot.sendMessage(msg.chat.id, `🔍 Testing unsubscribe for: ${email}`);
     
-    // Call the unsubscribe function directly
     const { handleUnsubscribe } = require('./mailer');
     const result = await handleUnsubscribe(email);
     
@@ -337,7 +382,7 @@ bot.onText(/\/testunsub (.+)/, async (msg, match) => {
   }
 });
 
-// TEST COMMAND - Force check for unsubscribe replies
+// Force check unsubscribe replies
 bot.onText(/\/forcecheck/, async (msg) => {
   if (!isAdmin(msg)) return;
   
@@ -352,12 +397,6 @@ bot.onText(/\/forcecheck/, async (msg) => {
     bot.sendMessage(msg.chat.id, `❌ Error: ${error.message}`);
   }
 });
-
-// Start the scheduler
-startScheduler();
-
-// Start checking for unsubscribe replies every 5 minutes
-startUnsubscribeChecker(5);
 
 // Test timezone command
 bot.onText(/\/time/, async (msg) => {
@@ -394,7 +433,6 @@ bot.onText(/\/testemail/, async (msg) => {
   try {
     bot.sendMessage(msg.chat.id, '📨 Sending test email to your admin email...');
     
-    const { sendTestEmail } = require('./mailer');
     const result = await sendTestEmail();
     
     if (result) {
@@ -407,39 +445,10 @@ bot.onText(/\/testemail/, async (msg) => {
   }
 });
 
-// Delete all emails command
-bot.onText(/\/deleteall/, async (msg) => {
-  if (!isAdmin(msg)) return;
-  
-  // Ask for confirmation first (safety measure)
-  bot.sendMessage(msg.chat.id, 
-    '⚠️ *WARNING:* This will delete ALL emails from your list!\n\n' +
-    'This action cannot be undone.\n\n' +
-    'Type `/confirmdelete` within 30 seconds to confirm.',
-    { parse_mode: 'Markdown' }
-  );
-  
-  // Store confirmation state (simple timeout approach)
-  const confirmHandler = async (confirmMsg) => {
-    if (confirmMsg.text === '/confirmdelete' && confirmMsg.from.id.toString() === ADMIN_ID) {
-      try {
-        const { deleteAllEmails } = require('./firebase');
-        await deleteAllEmails();
-        bot.sendMessage(msg.chat.id, '✅ All emails have been deleted from the list.');
-      } catch (error) {
-        bot.sendMessage(msg.chat.id, `❌ Error deleting emails: ${error.message}`);
-      }
-      // Remove listener after confirmation
-      bot.removeListener('message', confirmHandler);
-    }
-  };
-  
-  bot.on('message', confirmHandler);
-  
-  // Remove listener after 30 seconds
-  setTimeout(() => {
-    bot.removeListener('message', confirmHandler);
-  }, 30000);
-});
+// Start the scheduler
+startScheduler();
+
+// Start checking for unsubscribe replies every 5 minutes
+startUnsubscribeChecker(5);
 
 console.log('🤖 TopUpSwift Mailer Bot is running...');
